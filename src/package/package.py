@@ -7,11 +7,11 @@ from src.logger.logger import Logger
 class Package:
   pass
 
-class ArmorPackage(Package):
+class AmmunitionPackage(Package):
   
   def __init__(self):
     self._log = Logger()
-    self._log.debug("ArmorPackage", "Object initialization")
+    self._log.debug("AmmunitionPackage", "Object initialization")
 
 class HealthPackage(Package):
 

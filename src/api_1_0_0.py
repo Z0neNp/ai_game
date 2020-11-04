@@ -4,7 +4,7 @@ from sys import argv
 from src.box.box import Box
 from src.logger.logger import LoggerLevel, Logger
 from src.maze.maze import Maze
-from src.package.package import ArmorPackage, HealthPackage
+from src.package.package import AmmunitionPackage, HealthPackage
 from src.soldier.soldier import DefensiveSoldier, OffensiveSoldier
 from src.team.team import Team
 
@@ -14,11 +14,11 @@ def getConfigurations():
     result = load(config_file)
   return result
 
-def getArmorPackages(amount):
+def getAmmunitionPackages(amount):
   # TODO: validate that the amount is a positive integer
   result = []
   while (amount > 0):
-    result.append(ArmorPackage())
+    result.append(AmmunitionPackage())
     amount -= 1
   return result
 
@@ -79,13 +79,13 @@ def getMaze(config):
   msg = "Initialized a Maze with {} rooms".format(config["rooms"])
   Logger().debug("getMaze", msg)
   
-  armor_packages = getArmorPackages(config["packages"]["armor"])
-  msg = "Initialized {} armor packages".format(config["packages"]["armor"])
+  ammunition_packages = getAmmunitionPackages(config["packages"]["ammunition"])
+  msg = "Initialized {} ammunition packages".format(config["packages"]["ammunition"])
   Logger().debug("getMaze", msg)
   
-  placePackages(result, armor_packages)
-  msg = "Distributed {} armor packages among the rooms".format(
-    len(armor_packages)
+  placePackages(result, ammunition_packages)
+  msg = "Distributed {} ammunition packages among the rooms".format(
+    len(ammunition_packages)
   )
   Logger().debug("getMaze", msg)
   
