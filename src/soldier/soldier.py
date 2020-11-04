@@ -1,3 +1,5 @@
+from src.logger.logger import Logger
+
 """
   - shoots Bullets inside a Room
   - throws Grenades inside a Room
@@ -7,3 +9,15 @@
 """
 class Soldier:
   pass
+
+class DefensiveSoldier(Soldier):
+  
+  def __init__(self):
+    self._log = Logger()
+    self._log.debug("DefensiveSoldier", "Object initialization")
+
+class OffensiveSoldier(Soldier):
+  
+  def __init__(self):
+    self._log = Logger()
+    self._log.debug("OffensiveSoldier", "Object initialization")

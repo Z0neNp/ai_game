@@ -18,10 +18,10 @@ class Logger(metaclass=LoggerMeta):
     self._level = level
 
   def info(self, caller, msg):
-    output = f"INFO\t-\t{caller}\n\t{msg}"
+    output = f"\nINFO\t-\t{caller}\n\t{msg}"
     print(output)
 
   def debug(self, caller, msg):
     if self._level == LoggerLevel.DEBUG:
-      output = f"DEBUG\t-\t{caller}\n\t{msg}"
+      output = f"\nDEBUG\t-\t{caller}\n\t{msg}"
       print(output)

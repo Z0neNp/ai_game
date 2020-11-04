@@ -1,9 +1,10 @@
 {
   "boxes": 1,
+  "iterations_limit": 2,
   "packages": {
     "armor": 1,
     "health": 1
   },
   "rooms": 2,
-  "soldiers": 2
+  "soldiers": 4
 }
