@@ -1,5 +1,3 @@
-from src.logger.logger import Logger
-
 """
  - Soldier can shoot Bullet
  - Bullet can damage Soldier
@@ -7,9 +5,7 @@ from src.logger.logger import Logger
 class Bullet:
   
   def __init__(self, damage):
-    self._log = Logger()
     self._init_damage(damage)
-    self._log.debug("Bullet", "Object initialization")
 
   @property
   def damage(self, distance):
@@ -18,4 +14,4 @@ class Bullet:
   
   def _init_damage(self, val):
     # TODO: validate that val is an integer > 0
-    self._max_damage = damage
+    self._max_damage = val

@@ -1,8 +1,20 @@
 {
+  "ammunition": {
+    "bullet": {
+      "max_damage": 5
+    },
+    "grenade": {
+      "max_damage": 10
+    }
+  },
   "boxes": 1,
   "iterations_limit": 2,
   "packages": {
-    "ammunition": 1,
+    "ammunition": {
+      "bullets": 1,
+      "capacity": 5,
+      "grenades": 1
+    },
     "health": 1
   },
   "rooms": 2,

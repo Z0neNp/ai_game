@@ -2,24 +2,30 @@ from json import load
 from sys import argv
 
 from src.box.box import Box
+from src.bullet.bullet import Bullet
+from src.grenade.grenade import Grenade
 from src.logger.logger import LoggerLevel, Logger
 from src.maze.maze import Maze
 from src.package.package import AmmunitionPackage, HealthPackage
 from src.soldier.soldier import DefensiveSoldier, OffensiveSoldier
 from src.team.team import Team
 
+def getBulletPackages(packages, per_package, damage_per_bullet): 
+  result = []
+  while (packages > 0):
+    next_package = AmmunitionPackage()
+    count = per_package
+    while count > 0:
+      next_package.addUnit(Bullet(damage_per_bullet))
+      count -= 1
+    result.append(AmmunitionPackage())
+    packages -= 1
+  return result
+
 def getConfigurations():
   result = None
   with open("config.json") as config_file:
     result = load(config_file)
-  return result
-
-def getAmmunitionPackages(amount):
-  # TODO: validate that the amount is a positive integer
-  result = []
-  while (amount > 0):
-    result.append(AmmunitionPackage())
-    amount -= 1
   return result
 
 def getBoxes(amount):
@@ -32,6 +38,18 @@ def getBoxes(amount):
 
 def getDefensiveSoldier():
   result = DefensiveSoldier()
+  return result
+
+def getGrenadePackages(packages, per_package, damage_per_grenade): 
+  result = []
+  while (packages > 0):
+    next_package = AmmunitionPackage()
+    count = per_package
+    while count > 0:
+      next_package.addUnit(Grenade(damage_per_grenade))
+      count -= 1
+    result.append(AmmunitionPackage())
+    packages -= 1
   return result
 
 def getHealthPackages(amount):
@@ -79,16 +97,40 @@ def getMaze(config):
   msg = "Initialized a Maze with {} rooms".format(config["rooms"])
   Logger().debug("getMaze", msg)
   
-  ammunition_packages = getAmmunitionPackages(config["packages"]["ammunition"])
-  msg = "Initialized {} ammunition packages".format(config["packages"]["ammunition"])
-  Logger().debug("getMaze", msg)
-  
-  placePackages(result, ammunition_packages)
-  msg = "Distributed {} ammunition packages among the rooms".format(
-    len(ammunition_packages)
+  bullet_packages = getBulletPackages(
+    config["packages"]["ammunition"]["bullets"],
+    config["packages"]["ammunition"]["capacity"],
+    config["ammunition"]["bullet"]["max_damage"]
+  )
+
+  msg = "Initialized {} bullet packages - {} bullets / package - {} damage / bullet".format(
+    len(bullet_packages),
+    config["packages"]["ammunition"]["capacity"],
+    config["ammunition"]["bullet"]["max_damage"],
   )
   Logger().debug("getMaze", msg)
   
+  placePackages(result, bullet_packages)
+  msg = "Distributed {} bullet packages among the rooms".format(len(bullet_packages))
+  Logger().debug("getMaze", msg)
+  
+  grenade_packages = getGrenadePackages(
+    config["packages"]["ammunition"]["grenades"],
+    config["packages"]["ammunition"]["capacity"],
+    config["ammunition"]["grenade"]["max_damage"]
+  )
+
+  msg = "Initialized {} greanade packages - {} grenades / package - {} damage / grenade".format(
+    len(grenade_packages),
+    config["packages"]["ammunition"]["capacity"],
+    config["ammunition"]["grenade"]["max_damage"]
+  )
+  Logger().debug("getMaze", msg)
+  
+  placePackages(result, grenade_packages)
+  msg = "Distributed {} grenade packages among the rooms".format(len(grenade_packages))
+  Logger().debug("getMaze", msg)
+
   health_packages = getHealthPackages(config["packages"]["health"])
   msg = "Initialized {} health packages".format(config["packages"]["health"])
   Logger().debug("getMaze", msg)
