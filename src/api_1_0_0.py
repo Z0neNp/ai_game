@@ -42,8 +42,8 @@ def getBoxes(amount):
     amount -= 1
   return result
 
-def getDefensiveSoldier():
-  result = DefensiveSoldier()
+def getDefensiveSoldier(health):
+  result = DefensiveSoldier(health)
   return result
 
 def getGrenadePackages(packages, per_package, damage_per_grenade): 
@@ -74,11 +74,11 @@ def getHealthPackages(units, restore_per_unit):
     units -= 1
   return result
 
-def getOffensiveSoldier():
-  result = OffensiveSoldier()
+def getOffensiveSoldier(health):
+  result = OffensiveSoldier(health)
   return result
 
-def getTeams(amount):
+def getTeams(amount, soldier_health):
   # TODO: validate amount is a positive integer that is even
   msg = "Init---{} teams--2 soldiers per team"
   msg = msg.format(amount / 2)
@@ -87,9 +87,9 @@ def getTeams(amount):
   result = []
   while amount > 0:
     next_team = Team()
-    next_team.addSoldier(getOffensiveSoldier())
+    next_team.addSoldier(getOffensiveSoldier(soldier_health))
     amount -= 1
-    next_team.addSoldier(getDefensiveSoldier())
+    next_team.addSoldier(getDefensiveSoldier(soldier_health))
     amount -= 1
     result.append(next_team)
   return result
@@ -143,7 +143,7 @@ def getMaze(config):
   placePackages(result, health_packages)
   boxes = getBoxes(config["boxes"])
   placeBoxes(result, boxes)
-  teams = getTeams(config["soldiers"])
+  teams = getTeams(config["soldiers"], config["soldier"]["max_health"])
   placeTeams(result, teams)
   result.iterations_limit = config["iterations_limit"]
   return result

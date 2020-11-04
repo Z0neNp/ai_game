@@ -8,16 +8,23 @@ from src.logger.logger import Logger
   - can "see" all the objects in on a Path
 """
 class Soldier:
-  pass
+  
+  def __init__(self, max_health):
+    self._bullets = 0
+    self._init_health(max_health)
+    self._grenades = 0
+
+  def _init_health(self, val):
+    # TODO: validate the val is an integer > 0
+    self._max_health = val
+    self._health = self._max_health
 
 class DefensiveSoldier(Soldier):
   
-  def __init__(self):
-    self._log = Logger()
-    self._log.debug("DefensiveSoldier", "Object initialization")
+  def __init__(self, max_health):
+    super().__init__(max_health)
 
 class OffensiveSoldier(Soldier):
   
-  def __init__(self):
-    self._log = Logger()
-    self._log.debug("OffensiveSoldier", "Object initialization")
+  def __init__(self, max_health):
+    super().__init__(max_health)

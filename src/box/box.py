@@ -1,5 +1,3 @@
-from src.logger.logger import Logger
-
 """
 An object of type Box allows to hide behind itself.
   - Can be placed inside a Room
@@ -8,5 +6,4 @@ An object of type Box allows to hide behind itself.
 class Box:
 
   def __init__(self):
-    self._log = Logger()
-    self._log.debug("Box", "Object initialization")
+    pass

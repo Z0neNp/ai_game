@@ -21,5 +21,8 @@
     "health": 1
   },
   "rooms": 2,
+  "soldier": {
+    "max_health": 20
+  },
   "soldiers": 4
 }
