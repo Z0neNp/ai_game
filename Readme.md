@@ -8,3 +8,4 @@ Once the dependencies are installed, open the virtual workspace with the `pipenv
 
 # Improvements for v1_1_0
 - Bullet and Grenade should extend an Ammunition
+- Object placement should handle Packages, Boxes, Soldiers

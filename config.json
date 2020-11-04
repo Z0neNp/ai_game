@@ -8,6 +8,9 @@
     }
   },
   "boxes": 1,
+  "health": {
+    "restore": 2
+  },
   "iterations_limit": 2,
   "packages": {
     "ammunition": {

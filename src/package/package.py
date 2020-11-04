@@ -15,5 +15,9 @@ class AmmunitionPackage(Package):
 
 class HealthPackage(Package):
 
-  def __init__(self):
-    pass
+  def __init__(self, restore):
+    self._init_restore(restore)
+
+  def _init_restore(self, val):
+    # TODO: validate the val is an integer > 0
+    self._restore = val
