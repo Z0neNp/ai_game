@@ -9,6 +9,8 @@ if __name__ == "__main__":
   Logger().info("Game", "Configurations have been loaded")
   maze = getMaze(config)
   Logger().info("Game", "Maze is ready")
+  print(str(maze))
+  exit(0)
   while (maze.iterations_limit > 0):
     iteration_id = maze.iterations_limit
     Logger().debug("Game", f"---> Iteration {str(iteration_id)} started")

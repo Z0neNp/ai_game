@@ -120,8 +120,12 @@ def placeTeams(maze, teams):
     maze.placeTeam(team)
 
 def getMaze(config):
-  result = Maze(config["rooms"])
-  msg = "Initialized a Maze with {} rooms".format(config["rooms"])
+  result = Maze(config["height"], config["width"], config["rooms"])
+  msg = "Initialized a Maze---{} x {} map---{} rooms".format(
+    config["height"],
+    config["width"],
+    config["rooms"]
+  )
   Logger().debug("getMaze", msg)
   
   bullet_packages = getBulletPackages(

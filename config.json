@@ -11,6 +11,7 @@
   "health": {
     "restore": 2
   },
+  "height": 50,
   "iterations_limit": 2,
   "packages": {
     "ammunition": {
@@ -20,9 +21,10 @@
     },
     "health": 1
   },
-  "rooms": 2,
+  "rooms": 7,
   "soldier": {
     "max_health": 20
   },
-  "soldiers": 4
+  "soldiers": 4,
+  "width": 50
 }
