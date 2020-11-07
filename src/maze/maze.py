@@ -2,6 +2,7 @@ from random import seed, randint
 
 from src.logger.logger import Logger
 from src.cell.cell import CellType, Cell
+from src.room.room import Room
 
 """
 Contains Rooms, Pathes and Soldiers
@@ -36,7 +37,6 @@ class Maze:
 
   @iterations_limit.setter
   def iterations_limit(self, val):
-    # TODO: validate that val is an integer, greater than 0
     self._iterations_limit = val
 
   def placeBox(self, box):
@@ -53,15 +53,11 @@ class Maze:
 
   def placeTeam(self, team):
     # TODO
-    # validate the team is not empty
     # place randomy team in one of the rooms
     self._teams.append(team)
     pass
 
   def _init_map(self, height, width):
-    # TODO
-    # validate height is an Integer > 0
-    # validate width is an Integer > 0
     result = []
     i = 0
     while i < height:
@@ -79,36 +75,29 @@ class Maze:
   i.e. (x, y)
   """
   def _init_rooms(self, count):
-    # TODO
-    # count is an Integer > 0
-    maze_size = self.height - 1
+    max_size = self.height - 1
     map = self.map
     result = []
     seed()
     
     while count > 0:
-      height = self._room_height(maze_size)
-      width = self._room_width(maze_size)
-      center_x = self._room_center_coord(height, maze_size)
-      center_y = self._room_center_coord(width, maze_size)
-      if self._room_size_illegal(height, width, center_x, center_y):
+      height = self._room_height(max_size)
+      width = self._room_width(max_size)
+      candidate = Room(
+        height,
+        width,
+        self._room_center_coord(height, max_size),
+        self._room_center_coord(width, max_size)
+      )
+      if self._room_size_illegal(candidate):
         continue
       rooms_overlap = False
+      
       i = 0
       while i < len(result) and not rooms_overlap:
-        next_height = result[i][0]
-        next_width = result[i][1]
-        next_center_x = result[i][2]
-        next_center_y = result[i][3]
         rooms_overlap = self._rooms_overlap(
-          next_height,
-          next_width,
-          next_center_x,
-          next_center_y,
-          height,
-          width,
-          center_x,
-          center_y
+          result[i],
+          candidate
         )
         if rooms_overlap:
           break
@@ -117,12 +106,12 @@ class Maze:
       if rooms_overlap:
         continue
       else:
-        result.append((height, width, center_x, center_y))
+        result.append(candidate)
         count -= 1
-        k = int(center_x - width / 2)
-        while k < int(center_x + width / 2):
-          j = int(center_y - height / 2)
-          while j < int(center_y + height / 2):
+        k = int(candidate.center.x - candidate.width / 2)
+        while k < int(candidate.center.x + candidate.width / 2):
+          j = int(candidate.center.y - candidate.height / 2)
+          while j < int(candidate.center.y + candidate.height / 2):
             next_cell = map[k][j]
             next_cell.id = CellType.FLOOR
             j += 1
@@ -142,8 +131,8 @@ class Maze:
     for c in map[self.height - 1]:
       c.id = CellType.WALL
 
-  def _room_center_coord(self, size, map_size):
-    result = 1 + (size / 2) + randint(0, map_size) % (map_size - size -2)
+  def _room_center_coord(self, size, max_size):
+    result = 1 + (size / 2) + randint(0, max_size) % (max_size - size -2)
     return int(result)
   
   def _room_height(self, size):
@@ -151,22 +140,25 @@ class Maze:
     return int(result)
 
   def _room_width(self, size):
-    result = 7 + randint(0, size) % (size / 5)
-    return int(result)
+    return self._room_height(size)
 
-  def _rooms_overlap(self, h, w, cx, cy, other_h, other_w, other_cx, other_cy):
+  def _rooms_overlap(self, room, other):
     result = False
-    vertical_dist = abs(cx - other_cx)
-    horizontal_dist = abs(cy - other_cy)
-    h_overlap = h / 2 + other_h / 2 > horizontal_dist - 4
-    v_overlap = w / 2 + other_w / 2 > vertical_dist - 4
+    vertical_dist = abs(room.center.x - other.center.x)
+    horizontal_dist = abs(room.center.y - other.center.y)
+    h_overlap = room.height / 2 + other.height / 2 > horizontal_dist - 4
+    v_overlap = room.width / 2 + other.width / 2 > vertical_dist - 4
     result = h_overlap and v_overlap
     return result
   
-  def _room_size_illegal(self, height, width, center_x, center_y):
-    if center_x + width / 2 > self.width - 3 or center_x - width / 2 < 2:
+  def _room_size_illegal(self, room):
+    cx = room.center.x
+    cy = room.center.y
+    height = room.height
+    width = room.width
+    if (cx + width / 2 > self.width - 3) or (cx - width / 2 < 2):
       return True
-    if center_y + height / 2 > self.height - 3 or center_y - height / 2 < 2:
+    if (cy + height / 2 > self.height - 3) or (cy - height / 2 < 2):
       return True
     return False
   
