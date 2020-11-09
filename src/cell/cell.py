@@ -7,6 +7,7 @@ class CellType(Enum):
   WALL = 1
   PATH = 2
   FLOOR = 3
+  ENTRANCE = 4
   
 class Cell:
 
@@ -38,4 +39,6 @@ class Cell:
       return "#"
     if self.kind == CellType.PATH:
       return "1"
+    if self.kind == CellType.ENTRANCE:
+      return "E"
     return "0"

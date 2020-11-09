@@ -6,7 +6,11 @@ class Room:
     self.height = height
     self.width = width
     self.center = (center_x, center_y)
-
+    self._floor = []
+  
+  @property
+  def floor():
+    return self._floor
 
   @property
   def height(self):
@@ -31,3 +35,10 @@ class Room:
   @width.setter
   def width(self, val):
     self._width = val
+
+  def appendCell(self, val):
+    self.floor.append(val)
+
+  def partOfRoom(self, cell):
+    result = cell in self.floor
+    return result

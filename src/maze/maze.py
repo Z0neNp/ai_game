@@ -129,11 +129,8 @@ class Maze:
             self._log.info("Maze", "EXPECTED A PATH, BUT NONE WAS RETURNED")
             exit(1)
           
-          while not current.parent == None:
-            cell = self.cellByCoordinate(current.cell.point)
-            if cell.kind == CellType.SPACE:
-              cell.kind = CellType.PATH
-            current = current.parent
+          self._markPathAndEntrances(current)
+          
           connected[room].append(other)
           connected[other].append(room)
 
@@ -257,6 +254,24 @@ class Maze:
     for c in map[self.height - 1]:
       c.kind = CellType.WALL
 
+  def _markPathAndEntrances(self, path):
+    last_cell = None
+    while not path.parent == None:
+      cell = self.cellByCoordinate(path.cell.point)
+      
+      if cell.kind == CellType.SPACE:
+        cell.kind = CellType.PATH
+      
+      if not last_cell == None:
+        if last_cell.kind == CellType.FLOOR and cell.kind == CellType.PATH:
+          last_cell.kind = CellType.ENTRANCE
+
+        elif cell.kind == CellType.FLOOR and last_cell.kind == CellType.PATH:
+          cell.kind = CellType.ENTRANCE
+      
+      last_cell = cell
+      path = path.parent
+  
   def _registerNeighbours(self, node, other):
     node.addNeighbour(other)
     self._edges.append(Edge(
@@ -294,7 +309,7 @@ class Maze:
       return True
     if (cy + height / 2 > self.height - 3) or (cy - height / 2 < 2):
       return True
-    return False
+    return False  
   
   def __str__(self):
     map = self.map
