@@ -10,32 +10,32 @@ class CellType(Enum):
   
 class Cell:
 
-  def __init__(self, cell_t, x, y):
-    self.id = cell_t
+  def __init__(self, kind, x, y):
+    self.kind = kind
     self.point = (x, y)
     self._obj = None
 
   @property
-  def id(self):
-    return self._id
+  def kind(self):
+    return self._kind
 
   @property
   def point(self):
     return self._point
 
-  @id.setter
-  def id(self, val):
-    self._id = val
+  @kind.setter
+  def kind(self, val):
+    self._kind = val
 
   @point.setter
   def point(self, coords):
     self._point = Point(coords[0], coords[1])
 
   def __str__(self):
-    if self.id == CellType.SPACE:
-      return "_"
-    if self.id == CellType.WALL:
-      return "W"
-    if self.id == CellType.PATH:
-      return "P"
-    return "F"
+    if self.kind == CellType.SPACE:
+      return " "
+    if self.kind == CellType.WALL:
+      return "#"
+    if self.kind == CellType.PATH:
+      return "1"
+    return "0"
