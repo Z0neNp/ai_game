@@ -79,7 +79,6 @@ def getOffensiveSoldier(health):
   return result
 
 def getTeams(amount, soldier_health):
-  # TODO: validate amount is a positive integer that is even
   msg = "Init---{} teams--2 soldiers per team"
   msg = msg.format(amount / 2)
   Logger().debug("getTeams", msg)
@@ -121,12 +120,6 @@ def placeTeams(maze, teams):
 
 def getMaze(config):
   result = Maze(config["height"], config["width"], config["rooms"])
-  msg = "Initialized a Maze---{} x {} map---{} rooms".format(
-    config["height"],
-    config["width"],
-    config["rooms"]
-  )
-  Logger().debug("getMaze", msg)
   
   bullet_packages = getBulletPackages(
     config["packages"]["ammunition"]["bullets"],

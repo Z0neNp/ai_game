@@ -9,7 +9,7 @@ class Room:
     self._floor = []
   
   @property
-  def floor():
+  def floor(self):
     return self._floor
 
   @property

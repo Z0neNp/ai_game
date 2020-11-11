@@ -5,6 +5,7 @@ from src.logger.logger import Logger
 from src.cell.cell import CellType, Cell
 from src.graph.graph import Astar, Edge, Node, NodeState
 from src.room.room import Room
+from src.soldier.soldier import Soldier
 
 """
 Contains Rooms, Pathes and Soldiers
@@ -13,8 +14,9 @@ class Maze:
 
   def __init__(self, height, width, rooms_count):
     self._log = Logger()
+    self._log.debug("Maze", "Object Init")
     self._initMap(height, width)
-    self._initWalls()
+    self._markWalls()
     self._initRooms(rooms_count)
     self._initGraph()
     self._connectRooms()
@@ -76,10 +78,17 @@ class Maze:
     pass
 
   def placeTeam(self, team):
-    # TODO
-    # place randomy team in one of the rooms
+    room = self._roomWithoutSoldiers()
+    
+    if room == None:
+      self._log.info("Maze", "NO ROOM FOR TEAM PLACEMENT")
+      exit(1)
+    
+    for soldier in team.soldiers:
+      self._initSoldierAlgorithm(soldier)
+      self._mapSoldierToCell(soldier, room)
+    
     self._teams.append(team)
-    pass
 
   def _connectRooms(self):
     self._log.debug("Maze", "Connect {} Rooms".format(len(self.rooms)))
@@ -108,33 +117,27 @@ class Maze:
           astar.resetPriorityQueue()
           astar.resetParents()
           astar.resetTarget()
-          
           astar.updateStateOf(room.center, NodeState.START)
           astar.updateManhattanOf(room.center, 0)
-          astar.emplaceBy(room.center)
-          
+          astar.emplace(room.center)
           astar.target = astar.nodeByCoordinate(other.center)
 
           while not astar.solved:
-            
             if astar.noSolution():
               self._log.info("Maze", "NO PATH WAS FOUND BETWEEN THE ROOMS")
               exit(1)
-
             astar.nextIteration()
 
           current = astar.target
-          
           if current == None or current.parent == None:
             self._log.info("Maze", "EXPECTED A PATH, BUT NONE WAS RETURNED")
             exit(1)
-          
           self._markPathAndEntrances(current)
-          
           connected[room].append(other)
           connected[other].append(room)
 
-  def _initEdges(self, nodes):
+  def _initEdges(self):
+    nodes = self.nodes
     self._edges = []
     
     i = 1
@@ -154,16 +157,15 @@ class Maze:
         j += 1
       
       i += 1
-
     self._log.info("Maze", "Init -- {} Edges".format(len(self.edges)))
 
   def _initGraph(self):
-    self._log.info("Maze", "Init -- Graph")
+    self._log.info("Maze", "Init Graph")
     self._initNodes()
-    self._initEdges(self.nodes)
+    self._initEdges()
 
   def _initMap(self, height, width):
-    self._log.info("Maze", "Init -- {} x {} map of Cells".format(height, width))
+    self._log.info("Maze", "Init Map -- {} x {} Cells".format(height, width))
     result = []
     i = 0
     while i < height:
@@ -178,7 +180,6 @@ class Maze:
 
   def _initNodes(self):
     result = []
-    
     for row in self.map:
       row_of_nodes = []
       
@@ -188,40 +189,34 @@ class Maze:
       result.append(row_of_nodes)
     
     self._nodes = result
-    
     self._log.info("Maze", "Init -- {} x {} Nodes".format(self.height, self.width))
 
-  """
-  Initializes a list that contains the rooms' centers and their dimensions
-  i.e. (x, y)
-  """
+  def _initRoom(self, max_size):
+    height = self._roomHeight(max_size)
+    width = self._roomWidth(max_size)
+    result = Room(
+      height,
+      width,
+      self._roomCenterCoord(height, max_size),
+      self._roomCenterCoord(width, max_size)
+    )
+    return result
+  
   def _initRooms(self, count):
-    self._log.info("Maze", "Init -- {} rooms".format(count))
-    
-    max_size = self.height - 1
+    self._log.info("Maze", "Init {} Rooms".format(count))
+    seed() # For random values
     map = self.map
     result = []
-    seed()
     
     while count > 0:
-      height = self._roomHeight(max_size)
-      width = self._roomWidth(max_size)
-      candidate = Room(
-        height,
-        width,
-        self._roomCenterCoord(height, max_size),
-        self._roomCenterCoord(width, max_size)
-      )
+      candidate = self._initRoom(self.height - 1)
       if self._roomSizeIllegal(candidate):
         continue
       rooms_overlap = False
       
       i = 0
       while i < len(result) and not rooms_overlap:
-        rooms_overlap = self._roomsOverlap(
-          result[i],
-          candidate
-        )
+        rooms_overlap = self._roomsOverlap(result[i], candidate)
         if rooms_overlap:
           break
         i += 1
@@ -229,31 +224,48 @@ class Maze:
       if rooms_overlap:
         continue
       else:
+        self._markFloor(candidate)
         result.append(candidate)
         count -= 1
-        k = int(candidate.center.x - candidate.width / 2)
-        while k < int(candidate.center.x + candidate.width / 2):
-          j = int(candidate.center.y - candidate.height / 2)
-          while j < int(candidate.center.y + candidate.height / 2):
-            next_cell = map[k][j]
-            next_cell.kind = CellType.FLOOR
-            j += 1
-          k += 1
+    
     self._rooms = result
 
-  def _initWalls(self):
-    self._log.debug("Maze", "Mark Walls on the map")
+  def _initSoldierAlgorithm(self, soldier):
+    self._log.debug("Maze", "Init Astar for Soldier")
+    nodes = []
+    
+    for row in self.nodes:
+      for node in row:
+        nodes.append(Node(node.cell))
+    
+    soldier.edges = self.edges
+    soldier.nodes = nodes
+    soldier.rooms = self.rooms
+    soldier.initAlgorithm()
+    soldier.resetAlgorithm()
+  
+  def _mapSoldierToCell(self, soldier, room):
+    self._log.debug("Maze", "Map Soldier and Cell")
+    for cell in room.floor:
+      if cell.kind == CellType.FLOOR and cell.obj == None:
+        soldier.at = cell.point
+        cell.obj = soldier
+        return
+  
+  def _markFloor(self, room):
     map = self.map
-    for row in map:
-      next_cell = row[0]
-      next_cell.kind = CellType.WALL
-      next_cell = row[self.width - 1]
-      next_cell.kind = CellType.WALL
-    for c in map[0]:
-      c.kind = CellType.WALL
-    for c in map[self.height - 1]:
-      c.kind = CellType.WALL
-
+    i = int(room.center.x - room.width / 2)
+    while i < int(room.center.x + room.width / 2):
+      
+      j = int(room.center.y - room.height / 2)
+      while j < int(room.center.y + room.height / 2):
+        cell = map[i][j]
+        cell.kind = CellType.FLOOR
+        room.appendCell(cell)
+        j += 1
+      
+      i += 1
+  
   def _markPathAndEntrances(self, path):
     last_cell = None
     while not path.parent == None:
@@ -271,6 +283,19 @@ class Maze:
       
       last_cell = cell
       path = path.parent
+  
+  def _markWalls(self):
+    self._log.debug("Maze", "Mark Walls")
+    map = self.map
+    for row in map:
+      next_cell = row[0]
+      next_cell.kind = CellType.WALL
+      next_cell = row[self.width - 1]
+      next_cell.kind = CellType.WALL
+    for c in map[0]:
+      c.kind = CellType.WALL
+    for c in map[self.height - 1]:
+      c.kind = CellType.WALL
   
   def _registerNeighbours(self, node, other):
     node.addNeighbour(other)
@@ -311,6 +336,20 @@ class Maze:
       return True
     return False  
   
+  def _roomWithoutSoldiers(self):
+    for room in self.rooms:
+      hasSoldiers = False
+      
+      for cell in room.floor:
+        if cell.kind == CellType.FLOOR and isinstance(cell.obj, Soldier):
+          hasSoldiers = True
+          break
+      
+      if not hasSoldiers:
+        return room
+    
+    return None
+
   def __str__(self):
     map = self.map
     result = ""

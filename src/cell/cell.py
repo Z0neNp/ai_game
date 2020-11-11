@@ -21,6 +21,10 @@ class Cell:
     return self._kind
 
   @property
+  def obj(self):
+    return self._obj
+
+  @property
   def point(self):
     return self._point
 
@@ -28,11 +32,17 @@ class Cell:
   def kind(self, val):
     self._kind = val
 
+  @obj.setter
+  def obj(self, val):
+    self._obj = val
+
   @point.setter
   def point(self, coords):
     self._point = Point(coords[0], coords[1])
 
   def __str__(self):
+    if not self.obj == None:
+      return str(self.obj)
     if self.kind == CellType.SPACE:
       return " "
     if self.kind == CellType.WALL:

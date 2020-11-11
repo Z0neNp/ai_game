@@ -10,12 +10,9 @@ class NodeState(Enum):
   WHITE = 4
 
 class Node:
-  count = 0
   infinite_manhattan = 100000
   
   def __init__(self, cell):
-    self.id = Node.count
-    Node.count += 1
     self.cell = cell
     self._adjacent = []
     self.resetParent()
@@ -25,10 +22,6 @@ class Node:
   @property
   def cell(self):
     return self._cell
-
-  @property
-  def id(self):
-    return self._id
 
   @property
   def manhattan(self):
@@ -49,10 +42,6 @@ class Node:
   @cell.setter
   def cell(self, val):
     self._cell = val
-
-  @id.setter
-  def id(self, val):
-    self._id = val
 
   @manhattan.setter
   def manhattan(self, val):
@@ -82,11 +71,11 @@ class Node:
 
   def __eq__(self, other):
     if isinstance(other, Node):
-      return self.id == other.id
+      return self.cell.point == other.cell.point
     return False
 
   def __hash__(self, other):
-    return hash(self.id) + hash(self.cell)
+    return hash(self.cell.point) + hash(self.cell.point)
 
 class Edge:
 
@@ -140,18 +129,14 @@ class Astar():
 
   def __init__(self, nodes, edges):
     self._log = Logger()
-    
     self.nodes = nodes
-    self._log.debug("Astar", "Init -- {} Nodes".format(len(nodes)))
-    
     self.edges = edges
-    self._log.debug("Astar", "Init -- {} Edges".format(len(edges)))
-
     self.resetManhattan()
     self.resetPriorityQueue()
     self.resetSolved()
     self.resetStates()
     self.resetTarget()
+    self._log.debug("Astar", "Init Object -- {} Nodes -- {} Edges".format(len(nodes), len(edges)))
 
   @property
   def edges(self):
@@ -195,7 +180,7 @@ class Astar():
         return edge
     return None
 
-  def emplaceBy(self, coord):
+  def emplace(self, coord):
     target = self.nodeByCoordinate(coord)
     self.pq.insert(target)
 
@@ -205,10 +190,10 @@ class Astar():
     if current.state == NodeState.TARGET:
       self.solved = True
       return
-
+    
     if not current.state == NodeState.START:
       current.state = NodeState.BLACK
-
+    
     for node in current.neighbours:
       if node.state == NodeState.BLACK:
         continue
@@ -226,7 +211,7 @@ class Astar():
         node.manhattan = manhattan_value
         node.parent = current
         node.state = NodeState.GRAY
-        self.emplaceBy(node.cell.point)  
+        self.emplace(node.cell.point)  
       
       elif node.state == NodeState.GRAY:
         if node.manhattan > manhattan_value:

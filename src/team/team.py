@@ -13,6 +13,9 @@ class Team:
   def id(self):
     return self._id
 
+  @property
+  def soldiers(self):
+    return self._soldiers
+
   def addSoldier(self, soldier):
-    # TODO: validate the object is legal
     self._soldiers.append(soldier)
