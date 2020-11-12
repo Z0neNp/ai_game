@@ -79,23 +79,30 @@ def getOffensiveSoldier(health):
   return result
 
 def getTeams(amount, soldier_health):
-  msg = "Init---{} teams--2 soldiers per team"
-  msg = msg.format(amount / 2)
-  Logger().debug("getTeams", msg)
+  teams_count = 1
+  if amount > 1:
+    teams_count = amount / 2
+  
+  Logger().debug("getTeams", "Init {} teams for {} soldiers".format(teams_count, amount))
   
   result = []
   while amount > 0:
     next_team = Team()
+    result.append(next_team)
     next_team.addSoldier(getOffensiveSoldier(soldier_health))
     amount -= 1
+    
+    if amount == 0:
+      break
+    
     next_team.addSoldier(getDefensiveSoldier(soldier_health))
     amount -= 1
-    result.append(next_team)
+  
   return result
 
 def nextMove(team):
-  # TODO: iterate over team and make the next soldier move
-  pass
+  for soldier in team.soldiers:
+    soldier.nextMove()
 
 def placePackages(maze, packages):
   msg = "Distributing {} packages among the rooms".format(len(packages))
@@ -116,6 +123,12 @@ def placeTeams(maze, teams):
   Logger().debug("placeTeams", msg)
   
   for team in teams:
+    for soldier in team.soldiers:
+      nodes = maze.uniqueNodesSharedCells()
+      edges = maze.edges
+      soldier.initAstar(nodes, edges)
+      soldier.rooms = maze.rooms
+    
     maze.placeTeam(team)
 
 def getMaze(config):
@@ -142,7 +155,6 @@ def getMaze(config):
   placeBoxes(result, boxes)
   teams = getTeams(config["soldiers"], config["soldier"]["max_health"])
   placeTeams(result, teams)
-  result.iterations_limit = config["iterations_limit"]
   return result
 
 def setLogger():

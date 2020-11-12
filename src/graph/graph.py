@@ -12,9 +12,18 @@ class NodeState(Enum):
 class Node:
   infinite_manhattan = 100000
   
+  """
+    - ajacent is List<Node>
+    - cell is Cell
+    - manhattan is Number
+    - parent is Node
+    - state is NodeState
+  """
   def __init__(self, cell):
     self.cell = cell
     self._adjacent = []
+    self._parent = None
+    self._manhattan = None
     self.resetParent()
     self.resetManhattan()
     self.resetState()
@@ -56,18 +65,21 @@ class Node:
     self._state = val
 
   def addNeighbour(self, other):
-    if other in self.neighbours:
+    if other in self._adjacent:
       return
-    self.neighbours.append(other)
+    self._adjacent.append(other)
+
+  def isNeighbour(self, other):
+    return other in self._adjacent
 
   def resetManhattan(self):
-    self.manhattan = Node.infinite_manhattan
+    self._manhattan = Node.infinite_manhattan
 
   def resetParent(self):
-    self.parent = None
+    self._parent = None
 
   def resetState(self):
-    self.state = NodeState.WHITE
+    self._state = NodeState.WHITE
 
   def __eq__(self, other):
     if isinstance(other, Node):
@@ -79,6 +91,11 @@ class Node:
 
 class Edge:
 
+  """
+    - cost is Number
+    - dst is Node
+    - src is Node
+  """
   def __init__(self, src, dst, cost):
     self.src = src
     self.dst = dst
@@ -108,6 +125,9 @@ class Edge:
   def src(self, val):
     self._src = val
 
+  def __str__(self):
+    return "{} -> {}".format(str(self.src.cell.point), str(self.dst.cell.point))
+
 class PriorityNodes:
 
   def __init__(self):
@@ -127,28 +147,29 @@ class PriorityNodes:
 
 class Astar():
 
+  """
+    - edges is List<Edge>
+    - last_analyzed is Boolean
+    - log is Logger
+    - nodes is List<Node>
+    - pq is PriorityNodes
+    - solved is Boolean
+    - target is Node
+  """
   def __init__(self, nodes, edges):
     self._log = Logger()
-    self.nodes = nodes
-    self.edges = edges
-    self.resetManhattan()
-    self.resetPriorityQueue()
-    self.resetSolved()
-    self.resetStates()
-    self.resetTarget()
+    self._nodes = nodes
+    self._edges = edges
+    self._last_analyzed = None
+    self._solved = False
+    self._target = None
+    self._pq = None
+    self.resetAlgorithm()
     self._log.debug("Astar", "Init Object -- {} Nodes -- {} Edges".format(len(nodes), len(edges)))
 
   @property
-  def edges(self):
-    return self._edges
-
-  @property
-  def nodes(self):
-    return self._nodes
-
-  @property
-  def pq(self):
-    return self._pq
+  def last_analyzed(self):
+    return self._last_analyzed
 
   @property
   def solved(self):
@@ -158,37 +179,12 @@ class Astar():
   def target(self):
     return self._target
 
-  @edges.setter
-  def edges(self, val):
-    self._edges = val
-
-  @nodes.setter
-  def nodes(self, val):
-    self._nodes = val
-
-  @solved.setter
-  def solved(self, val):
-    self._solved = val
-
-  @target.setter
-  def target(self, val):
-    self._target = val
-
-  def edgeBy(self, node, neighbour):
-    for edge in self.edges:
-      if edge.src == node and edge.dst == neighbour:
-        return edge
-    return None
-
-  def emplace(self, coord):
-    target = self.nodeByCoordinate(coord)
-    self.pq.insert(target)
-
   def nextIteration(self):
-    current = self.pq.pop()
+    current = self._pq.pop()
+    self._last_analyzed = current
     
     if current.state == NodeState.TARGET:
-      self.solved = True
+      self._solved = True
       return
     
     if not current.state == NodeState.START:
@@ -198,45 +194,95 @@ class Astar():
       if node.state == NodeState.BLACK:
         continue
 
-      edge = self.edgeBy(current, node)
+      edge = self._edgeBy(current, node)
 
       if edge == None:
         self._log.info("Astar", "EXPECTED AN EDGE, BUT NONE WAS RETURNED")
         exit(1)
 
-      left_to_target = self.target.cell.point.distance(node.cell.point)
+      left_to_target = self._target.cell.point.distance(node.cell.point)
       manhattan_value = current.manhattan + left_to_target + edge.cost
 
-      if node.state == NodeState.WHITE:
+      if node.state == NodeState.WHITE or node.state == NodeState.TARGET:
         node.manhattan = manhattan_value
         node.parent = current
         node.state = NodeState.GRAY
-        self.emplace(node.cell.point)  
+        self._emplace(node.cell.point)  
       
-      elif node.state == NodeState.GRAY:
+      elif node.state == NodeState.GRAY or node.state == NodeState.TARGET:
         if node.manhattan > manhattan_value:
           node.manhattan = manhattan_value
           node.parent = current
 
-      if self.target == node:
-        self.solved = True
+      if self._target == node:
+        self._solved = True
         return
 
-  def nodeByCoordinate(self, coord):
-    for node in self.nodes:
-      if node.cell.point == coord:
-        return node
-    return None
+  def nextIterationNeighbourPriority(self):
+    current = self._pq.pop()
+    if not self._last_analyzed == None:
+      is_neighbour = current.isNeighbour(self._last_analyzed)
+      if not is_neighbour or not self._last_analyzed.isNeighbour(current):
+        return
+    
+    if current == None:
+      self._target = None
+      return
+    
+    self._last_analyzed = current
+    
+    if current.state == NodeState.TARGET:
+      self._solved = True
+      return
+    
+    if not current.state == NodeState.START:
+      current.state = NodeState.BLACK
+    
+    for node in current.neighbours:
+      if node.state == NodeState.BLACK:
+        continue
+
+      edge = self._edgeBy(current, node)
+
+      if edge == None:
+        self._log.info("Astar", "EXPECTED AN EDGE, BUT NONE WAS RETURNED")
+        exit(1)
+
+      left_to_target = self._target.cell.point.distance(node.cell.point)
+      manhattan_value = current.manhattan + left_to_target + edge.cost
+
+      if node.state == NodeState.WHITE or node.state == NodeState.TARGET:
+        node.manhattan = manhattan_value
+        node.parent = current
+        node.state = NodeState.GRAY
+        self._emplace(node.cell.point)  
+      
+      elif node.state == NodeState.GRAY or node.state == NodeState.TARGET:
+        if node.manhattan > manhattan_value:
+          node.manhattan = manhattan_value
+          node.parent = current
+
+      if self._target == node:
+        self._solved = True
+        return
+
+  def noOptionsLeft(self):
+    if not self._target == None:
+      return self._pq.empty()
+    return False
 
   def noSolution(self):
-    return self.pq.empty()
+    return self._pq.empty()
+
+  def resetLastAnalysed(self):
+    self._last_analyzed = None
 
   def resetManhattan(self):
-    for node in self.nodes:
+    for node in self._nodes:
       node.resetManhattan()
 
   def resetParents(self):
-    for node in self.nodes:
+    for node in self._nodes:
       node.resetParent()
 
   def resetPriorityQueue(self):
@@ -246,16 +292,54 @@ class Astar():
     self._solved = False
   
   def resetStates(self):
-    for node in self.nodes:
+    for node in self._nodes:
       node.resetState()
 
   def resetTarget(self):
-    self.target = None
+    self._target = None
 
-  def updateManhattanOf(self, coord, val):
-    current = self.nodeByCoordinate(coord)
+  def resetAlgorithm(self):
+    self.resetSolved()
+    self.resetStates()
+    self.resetManhattan()
+    self.resetPriorityQueue()
+    self.resetParents()
+    self.resetTarget()
+    self.resetLastAnalysed()
+
+  def updateNodeToStateStartBy(self, cell):
+    self._updateStateOf(cell.point, NodeState.START)
+    self._updateManhattanOf(cell.point, 0)
+    self._emplace(cell.point)
+
+  def updateNodeToStateTargetBy(self, cell):
+    self._updateStateOf(cell.point, NodeState.TARGET)
+    self._target = self._nodeByCoordinate(cell.point)
+
+  def _edgeBy(self, node, neighbour):
+    for edge in self._edges:
+      if edge.src.cell.point == node.cell.point and edge.dst.cell.point == neighbour.cell.point:
+        # self._log.debug("Astar", "Returning the edge {}".format(str(edge)))
+        return edge
+      if edge.dst.cell.point == node.cell.point and edge.src.cell.point == neighbour.cell.point:
+        # self._log.debug("Astar", "Returning the edge {}".format(str(edge)))
+        return edge
+    return None
+  
+  def _emplace(self, coord):
+    node = self._nodeByCoordinate(coord)
+    self._pq.insert(node)
+  
+  def _nodeByCoordinate(self, coord):
+    for node in self._nodes:
+      if node.cell.point == coord:
+        return node
+    return None
+
+  def _updateManhattanOf(self, coord, val):
+    current = self._nodeByCoordinate(coord)
     current.manhattan = val
-
-  def updateStateOf(self, coord, val):
-    current = self.nodeByCoordinate(coord)
-    current.state = val
+  
+  def _updateStateOf(self, coord, val):
+    node = self._nodeByCoordinate(coord)
+    node.state = val

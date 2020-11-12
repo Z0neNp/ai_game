@@ -1,9 +1,13 @@
 """
-Can contain up to two Soldiers that help each other to eliminate another team
+  Contains Soldiers that help each other
 """
 class Team:
   count = 1
 
+  """
+    - id is Integer
+    - soldiers is List<Soldier>
+  """
   def __init__(self):
     self._id = Team.count
     Team.count += 1

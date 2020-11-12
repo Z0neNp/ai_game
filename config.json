@@ -12,7 +12,7 @@
     "restore": 2
   },
   "height": 45,
-  "iterations_limit": 2,
+  "iterations_limit": 1000,
   "packages": {
     "ammunition": {
       "bullets": 1,
@@ -25,6 +25,6 @@
   "soldier": {
     "max_health": 20
   },
-  "soldiers": 4,
+  "soldiers": 1,
   "width": 45
 }
