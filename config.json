@@ -12,7 +12,7 @@
     "restore": 2
   },
   "height": 45,
-  "iterations_limit": 1000,
+  "iterations_limit": 100,
   "packages": {
     "ammunition": {
       "bullets": 1,
