@@ -1,5 +1,6 @@
 from json import load
 from sys import argv
+from time import sleep
 
 from src.box.box import Box
 from src.bullet.bullet import Bullet
@@ -9,6 +10,9 @@ from src.maze.maze import Maze
 from src.package.package import AmmunitionPackage, HealthPackage
 from src.soldier.soldier import DefensiveSoldier, OffensiveSoldier
 from src.team.team import Team
+
+def delay():
+  sleep(1)
 
 def getBulletPackages(packages, per_package, damage_per_bullet): 
   msg = "Init---{} bullet packages---{} bullets per package---{} damage per bullet"
@@ -42,8 +46,8 @@ def getBoxes(amount):
     amount -= 1
   return result
 
-def getDefensiveSoldier(health):
-  result = DefensiveSoldier(health)
+def getDefensiveSoldier(health, team_id):
+  result = DefensiveSoldier(health, team_id)
   return result
 
 def getGrenadePackages(packages, per_package, damage_per_grenade): 
@@ -74,8 +78,8 @@ def getHealthPackages(units, restore_per_unit):
     units -= 1
   return result
 
-def getOffensiveSoldier(health):
-  result = OffensiveSoldier(health)
+def getOffensiveSoldier(health, team_id):
+  result = OffensiveSoldier(health, team_id)
   return result
 
 def getTeams(amount, soldier_health):
@@ -89,13 +93,13 @@ def getTeams(amount, soldier_health):
   while amount > 0:
     next_team = Team()
     result.append(next_team)
-    next_team.addSoldier(getOffensiveSoldier(soldier_health))
+    next_team.addSoldier(getOffensiveSoldier(soldier_health, next_team.id))
     amount -= 1
     
     if amount == 0:
       break
     
-    next_team.addSoldier(getDefensiveSoldier(soldier_health))
+    next_team.addSoldier(getDefensiveSoldier(soldier_health, next_team.id))
     amount -= 1
   
   return result

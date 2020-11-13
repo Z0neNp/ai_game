@@ -53,6 +53,9 @@ class Cell:
     result = self._kind == CellType.FLOOR or self._kind == CellType.PATH
     return result or self._kind == CellType.ENTRANCE
   
+  def isPath(self):
+    return self._kind == CellType.PATH
+  
   def isTraversable(self):
     if self.isPassable():
       return self.isEmpty()

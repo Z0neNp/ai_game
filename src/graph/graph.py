@@ -154,6 +154,7 @@ class Astar():
     - nodes is List<Node>
     - pq is PriorityNodes
     - solved is Boolean
+    - start is Node
     - target is Node
   """
   def __init__(self, nodes, edges):
@@ -162,6 +163,7 @@ class Astar():
     self._edges = edges
     self._last_analyzed = None
     self._solved = False
+    self._start = None
     self._target = None
     self._pq = None
     self.resetAlgorithm()
@@ -174,6 +176,10 @@ class Astar():
   @property
   def solved(self):
     return self._solved
+
+  @property
+  def start(self):
+    return self._start
 
   @property
   def target(self):
@@ -291,6 +297,9 @@ class Astar():
   def resetSolved(self):
     self._solved = False
   
+  def resetStart(self):
+    self._start = None
+  
   def resetStates(self):
     for node in self._nodes:
       node.resetState()
@@ -304,6 +313,7 @@ class Astar():
     self.resetManhattan()
     self.resetPriorityQueue()
     self.resetParents()
+    self.resetStart()
     self.resetTarget()
     self.resetLastAnalysed()
 
@@ -311,6 +321,7 @@ class Astar():
     self._updateStateOf(cell.point, NodeState.START)
     self._updateManhattanOf(cell.point, 0)
     self._emplace(cell.point)
+    self._start = self._nodeByCoordinate(cell.point)
 
   def updateNodeToStateTargetBy(self, cell):
     self._updateStateOf(cell.point, NodeState.TARGET)

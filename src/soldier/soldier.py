@@ -11,6 +11,7 @@ from src.logger.logger import Logger
   - can "see" all the objects in on a Path
 """
 class Soldier:
+  count = 1
   
   """
     - astar is Astar
@@ -20,10 +21,12 @@ class Soldier:
     - edges is List<Edge>
     - grenades is List<Grenade>
     - health is Integer
+    - id is Integer
     - nodes is List<Node>
     - rooms is List<Room>
+    - team_id is Integer
   """
-  def __init__(self, max_health):
+  def __init__(self, max_health, team_id):
     self._astar = None
     self._at = None
     self._bullets = []
@@ -31,13 +34,25 @@ class Soldier:
     self._edges = None
     self._grenades = []
     self._health = max_health
+    self._id = Soldier.count
+    Soldier.count += 1
     self._log = Logger()
     self._nodes = None
     self._rooms = None
+    self._team_id = team_id
+
 
   @property
   def at(self):
     return self._at
+  
+  @property
+  def id(self):
+    return self._id
+
+  @property
+  def team_id(self):
+    return self._team_id
   
   @property
   def rooms(self):
@@ -62,16 +77,17 @@ class Soldier:
     # Should look for Health?
 
     if self._astar.target == None:
-      self._log.debug("Soldier", "No existing target")
-      self._pickTarget()
+      self._noExistingTargetFlow()
 
     if self._astar.noOptionsLeft():
-      self._log.debug("Soldier", "Reaching the existing target at {} is not possible".format(str(self._at.point)))
-      self._astar.resetAlgorithm()
-      self._pickTarget()
+      self._noOptionsLeftFlow()
 
     self._astar.nextIterationNeighbourPriority()
     node = self._astar.last_analyzed
+
+    if not self._at.point == node.cell.point and self._spottedSoldier(node):
+      self._spottedSoldierFlow(node)
+
     while not self.mapTo(node) and not self._astar.noOptionsLeft():
       self._astar.nextIteration()
       node = self._astar.last_analyzed
@@ -99,11 +115,78 @@ class Soldier:
     self._astar.resetPriorityQueue()
     self._astar.resetParents()
     self._astar.resetTarget()
+     
+  def shareTargetWith(self, other):
+    target = self.target()
+    self._log.debug("Soldier", "Soldier {} shares Target at {} with Soldier {}".format(
+      self._id,
+      target.cell.point,
+      other.id
+    ))
+    self.resetAstar()
+    other.resetAstar()
+    self.updateAstarStart()
+    other.updateAstarStart()
+    self.updateAstarTarget(target.cell)
+    other.updateAstarTarget(target.cell)
+  
+  def start(self):
+    return self._astar.start
 
+  def target(self):
+    return self._astar.target
+  
+  def updateAstarStart(self):
+    self._astar.updateNodeToStateStartBy(self._at)
+  
+  def updateAstarTarget(self, cell):
+    self._astar.updateNodeToStateTargetBy(cell)
+  
   def _nodeBy(self, cell):
     for node in self._nodes:
       if node.cell.samePosition(cell):
         return node
+  
+  def _noExistingTargetFlow(self):
+    self._log.debug("Soldier", "Decision Flow -- No Existing Target")
+    self._pickTarget()
+
+  def _noAmmunition(self):
+    return len(self._bullets) == 0
+  
+  def _noOptionsLeftFlow(self):
+    self._log.debug("Soldier", "Decision Flow -- Reaching Target at {} is not possible".format(
+      str(self._at.point)
+    ))
+    self._astar.resetAlgorithm()
+    self._pickTarget()
+  
+  def _reverseTarget(self):
+    self._log.debug("Soldier", "Decision Flow -- Reversing the Target")
+    start = self.start()
+    self._astar.resetAlgorithm()
+    self._astar.updateNodeToStateStartBy(self._at)
+    self._astar.updateNodeToStateTargetBy(start.cell)
+  
+  def _spottedFriendFlow(self, other):
+    self._log.debug("Soldier", "Decision Flow -- Soldier {} at {} spotted Friend {} at {}".format(
+      self._id,
+      self._at.point,
+      other.id,
+      other.at.point
+    ))
+    if other._at.isPath():
+      if not self.target():
+        other.shareTargetWith(self)
+      else:
+        self.shareTargetWith(other)
+  
+  def _spottedSoldierFlow(self, node):
+    other = node.cell.obj
+    if self._team_id == other.team_id:
+      self._spottedFriendFlow(other)
+    else:
+      self._spottedEnemyFlow(other)
   
   def _pickTarget(self):
     result = None
@@ -121,15 +204,52 @@ class Soldier:
     self._astar.updateNodeToStateTargetBy(result)
     self._log.debug("Soldier", "The picked target is {}".format(str(result.point)))
   
+  def _spottedSoldier(self, node):
+    if not node.cell.isEmpty():
+      return isinstance(node.cell.obj, Soldier)
+    return False
+  
   def __str__(self):
-    return "S"
+    return str(self._id)
 
 class DefensiveSoldier(Soldier):
   
-  def __init__(self, max_health):
-    super().__init__(max_health)
+  def __init__(self, max_health, team_id):
+    super().__init__(max_health, team_id)
+
+  def _spottedEnemyFlow(self, other):
+    self._log.debug(
+      "DefensiveSoldier",
+      "Decision Flow -- Soldier {} at {} spotted Enemy {} at {}".format(
+        self._id,
+        self._at.point,
+        other.id,
+        other.at.point
+      )
+    )
+    if other._at.isPath():
+      if self._noAmmunition():
+        self._reverseTarget()
+      else:
+        pass
 
 class OffensiveSoldier(Soldier):
   
-  def __init__(self, max_health):
-    super().__init__(max_health)
+  def __init__(self, max_health, team_id):
+    super().__init__(max_health, team_id)
+
+  def _spottedEnemyFlow(self, other):
+    self._log.debug(
+      "OffensiveSoldier",
+      "Decision Flow -- Soldier {} at {} spotted Enemy {} at {}".format(
+        self._id,
+        self._at.point,
+        other.id,
+        other.at.point
+      )
+    )
+    if other._at.isPath():
+      if self._noAmmunition():
+        self._reverseTarget()
+      else:
+        pass
