@@ -8,8 +8,7 @@ class Grenade:
     self._init_damage(damage)
 
   @property
-  def damage(self, distance):
-    # TODO: take into account the distance to the target
+  def damage(self):
     return self._max_damage
   
   def _init_damage(self, val):

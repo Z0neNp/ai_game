@@ -23,3 +23,9 @@ class Team:
 
   def addSoldier(self, soldier):
     self._soldiers.append(soldier)
+
+  def isEmpty(self):
+    return len(self._soldiers) == 0
+
+  def removeSoldier(self, soldier):
+    self._soldiers.remove(soldier)

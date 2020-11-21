@@ -1,6 +1,8 @@
 from enum import Enum
 
+from src.package.package import AmmunitionPackage, BulletPackage, GrenadePackage, HealthPackage
 from src.point.point import Point
+from src.soldier.soldier import Soldier
 
 class CellType(Enum):
   SPACE = 0
@@ -46,9 +48,32 @@ class Cell:
   def point(self, coords):
     self._point = Point(coords[0], coords[1])
 
+  def containsBulletPackage(self):
+    if not self.isEmpty():
+      return isinstance(self._obj, BulletPackage)
+    return False
+
+  def containsGrenadePackage(self):
+    if not self.isEmpty():
+      return isinstance(self._obj, GrenadePackage)
+    return False
+  
+  def containsHealthPackage(self):
+    if not self.isEmpty():
+      return isinstance(self._obj, HealthPackage)
+    return False
+
+  def containsSoldier(self):
+    if not self.isEmpty():
+      return isinstance(self._obj, Soldier)
+    return False
+  
   def isEmpty(self):
     return self._obj == None
 
+  def isFloor(self):
+    return self._kind == CellType.FLOOR
+  
   def isPassable(self):
     result = self._kind == CellType.FLOOR or self._kind == CellType.PATH
     return result or self._kind == CellType.ENTRANCE
@@ -71,7 +96,7 @@ class Cell:
     if not self.obj == None:
       return str(self.obj)
     if self.kind == CellType.SPACE:
-      return "*"
+      return "."
     if self.kind == CellType.WALL:
       return "#"
     if self.kind == CellType.PATH:

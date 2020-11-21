@@ -33,5 +33,11 @@ class Room:
   def appendCell(self, val):
     self._floor.append(val)
 
+  def cellBy(self, x, y):
+    for cell in self._floor:
+      if cell.point.x == x and cell.point.y == y:
+        return cell
+    return None
+  
   def partOfRoom(self, cell):
     return cell in self._floor

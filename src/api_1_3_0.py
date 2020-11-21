@@ -7,26 +7,35 @@ from src.bullet.bullet import Bullet
 from src.grenade.grenade import Grenade
 from src.logger.logger import LoggerLevel, Logger
 from src.maze.maze import Maze
-from src.package.package import AmmunitionPackage, HealthPackage
+from src.package.package import BulletPackage, GrenadePackage, HealthPackage
 from src.soldier.soldier import DefensiveSoldier, OffensiveSoldier
 from src.team.team import Team
 
 def delay():
   sleep(1)
 
+def getBoxes(amount):
+  # TODO: validate that the amount is a positive integer
+  Logger().debug("getBoxes", "Init -- {} boxes".format(amount))
+  result = []
+  while (amount > 0):
+    result.append(Box())
+    amount -= 1
+  return result
+
 def getBulletPackages(packages, per_package, damage_per_bullet): 
-  msg = "Init---{} bullet packages---{} bullets per package---{} damage per bullet"
+  msg = "Init -- {} bullet packages -- {} bullets per package -- {} damage per bullet"
   msg = msg.format(packages, per_package, damage_per_bullet)
   Logger().debug("getBulletPackages", msg)
 
   result = []
   while (packages > 0):
-    next_package = AmmunitionPackage()
+    next_package = BulletPackage()
     count = per_package
     while count > 0:
       next_package.addUnit(Bullet(damage_per_bullet))
       count -= 1
-    result.append(AmmunitionPackage())
+    result.append(next_package)
     packages -= 1
   return result
 
@@ -36,39 +45,28 @@ def getConfigurations():
     result = load(config_file)
   return result
 
-def getBoxes(amount):
-  # TODO: validate that the amount is a positive integer
-  msg = "Init {} boxes".format(amount)
-  Logger().debug("getBoxes", msg)
-  result = []
-  while (amount > 0):
-    result.append(Box())
-    amount -= 1
-  return result
-
 def getDefensiveSoldier(health, team_id):
   result = DefensiveSoldier(health, team_id)
   return result
 
 def getGrenadePackages(packages, per_package, damage_per_grenade): 
-  msg = "Init---{} greanade packages---{} grenades per package---{} damage per grenade"
+  msg = "Init -- {} greanade packages -- {} grenades per package -- {} damage per grenade"
   msg = msg.format(packages, per_package, damage_per_grenade)
   Logger().debug("getGrenadePackages", msg)
 
   result = []
   while (packages > 0):
-    next_package = AmmunitionPackage()
+    next_package = GrenadePackage()
     count = per_package
     while count > 0:
       next_package.addUnit(Grenade(damage_per_grenade))
       count -= 1
-    result.append(AmmunitionPackage())
+    result.append(next_package)
     packages -= 1
   return result
 
 def getHealthPackages(units, restore_per_unit):
-  # TODO: validate that the amount is a positive integer
-  msg = "Init---{} health packages---{} health restore per package"
+  msg = "Init -- {} health packages -- {} health restore per package"
   msg = msg.format(units, restore_per_unit)
   Logger().debug("getHealthPackages", msg)
   
@@ -104,7 +102,25 @@ def getTeams(amount, soldier_health):
   
   return result
 
-def nextMove(team):
+def nextMove(maze, team):
+  to_remove = []
+  
+  for soldier in team.soldiers:
+  
+    if soldier.showVisualState():
+      print(str(maze))
+      delay()
+      soldier.resetVisualState()
+      print(str(maze))
+      delay()
+  
+    if soldier.health <= 0:
+      soldier.removeFromGame()
+      to_remove.append(soldier)
+  
+  for soldier in to_remove:
+    team.removeSoldier(soldier)
+
   for soldier in team.soldiers:
     soldier.nextMove()
 
@@ -135,29 +151,30 @@ def placeTeams(maze, teams):
     
     maze.placeTeam(team)
 
-def getMaze(config):
-  result = Maze(config["height"], config["width"], config["rooms"])
-  
+def getMaze(config):  
   bullet_packages = getBulletPackages(
     config["packages"]["ammunition"]["bullets"],
     config["packages"]["ammunition"]["capacity"],
     config["ammunition"]["bullet"]["max_damage"]
   )
-  placePackages(result, bullet_packages)
   grenade_packages = getGrenadePackages(
     config["packages"]["ammunition"]["grenades"],
     config["packages"]["ammunition"]["capacity"],
     config["ammunition"]["grenade"]["max_damage"]
   )
-  placePackages(result, grenade_packages)
   health_packages = getHealthPackages(
     config["packages"]["health"],
     config["health"]["restore"]
   )
-  placePackages(result, health_packages)
   boxes = getBoxes(config["boxes"])
-  placeBoxes(result, boxes)
   teams = getTeams(config["soldiers"], config["soldier"]["max_health"])
+  
+  result = Maze(config["height"], config["width"], config["rooms"])
+  
+  placePackages(result, bullet_packages)
+  placePackages(result, grenade_packages)
+  placePackages(result, health_packages)
+  placeBoxes(result, boxes)
   placeTeams(result, teams)
   return result
 

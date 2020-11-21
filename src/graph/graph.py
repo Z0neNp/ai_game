@@ -144,7 +144,6 @@ class PriorityNodes:
     removed = self._entries.pop()
     return removed
 
-
 class Astar():
 
   """

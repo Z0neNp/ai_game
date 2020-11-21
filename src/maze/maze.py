@@ -53,10 +53,9 @@ class Maze:
     pass
 
   def placePackage(self, package):
-    # TODO
-    # validate the package exists
-    # place randomly in one of the rooms
-    pass
+    room = self._randomRoom()
+    free_cell = self._randomFreeFloorCell(room)
+    free_cell.obj = package
 
   def placeTeam(self, team):
     room = self._roomWithoutSoldiers()
@@ -84,6 +83,16 @@ class Maze:
           node.addNeighbour(other)
     
     return result
+  
+  def updateTeamsState(self):
+    to_remove = []
+
+    for team in self._teams:
+      if team.isEmpty():
+        to_remove.append(team)
+
+    for team in to_remove:
+      self._teams.remove(team)
   
   def width(self):
     return len(self._map[0])
@@ -133,7 +142,7 @@ class Maze:
           self._markPathAndEntrances(target)
           connected[room].append(other)
           connected[other].append(room)
-
+ 
   def _initEdges(self):
     self._edges = []
     
@@ -154,7 +163,7 @@ class Maze:
         j += 1
       
       i += 1
-    self._log.info("Maze", "Init -- {} Edges".format(len(self.edges)))
+    self._log.info("Maze", "Init -- {} Edges".format(str(len(self._edges))))
 
   def _initMap(self, height, width):
     self._log.info("Maze", "Init Map -- {} x {} Cells".format(height, width))
@@ -185,7 +194,7 @@ class Maze:
       result.append(row_of_nodes)
     
     self._nodes = result
-    self._log.info("Maze", "Init -- {} x {} Nodes".format(self.height(), self.width()))
+    self._log.info("Maze", "Init -- {} x {} Nodes".format(str(self.height()), str(self.width())))
 
   def _initRoom(self):
     max_size = self.height() - 1
@@ -282,6 +291,43 @@ class Maze:
     
     for c in self._map[self.height() - 1]:
       c.kind = CellType.WALL
+  
+  def _randomFreeFloorCell(self, room):
+    seed()
+    while True:
+      cell_index = randint(0, len(room.floor) - 1)
+      cell = room.floor[cell_index]
+      if cell.isFloor() and cell.isEmpty():
+        neighbour = room.cellBy(cell.point.x + 1, cell.point.y)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x + 1, cell.point.y + 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x + 1, cell.point.y - 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x, cell.point.y + 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x, cell.point.y - 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x - 1, cell.point.y)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x - 1, cell.point.y - 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        neighbour = room.cellBy(cell.point.x - 1, cell.point.y + 1)
+        if not neighbour == None and not cell.isEmpty():
+          continue
+        return cell
+
+  def _randomRoom(self):
+    seed()
+    room_index = randint(0, len(self._rooms) - 1)
+    return self._rooms[room_index]
   
   def _registerNeighbours(self, node, other):
     node.addNeighbour(other)
