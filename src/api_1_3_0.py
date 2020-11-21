@@ -111,8 +111,6 @@ def nextMove(maze, team):
       print(str(maze))
       delay()
       soldier.resetVisualState()
-      print(str(maze))
-      delay()
   
     if soldier.health <= 0:
       soldier.removeFromGame()
@@ -120,6 +118,9 @@ def nextMove(maze, team):
   
   for soldier in to_remove:
     team.removeSoldier(soldier)
+
+  print(str(maze))
+  delay()
 
   for soldier in team.soldiers:
     soldier.nextMove()
